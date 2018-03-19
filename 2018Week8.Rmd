@@ -39,7 +39,7 @@ Recall if it is appropriate to determine distances between two points with Eucli
 
 These are the types of questions that we can use `phyloseq` to address with our OTUtables and our sample data.
 
-# Beyond the OTU Table
+# Beyond the OTU Table (OTU = operational taxomonic units)
 
 `phyloseq` is an R package for efficient interactive and reproducible analyses of OTU-clustered high-throughput phylogenetic sequencing data. We can take the sequence variant table produced by `dada2` and use it, along with taxonomic classification and data about the samples, in these analyses. `Phyloseq` imports, stores, analyzes, and displays these data.
 

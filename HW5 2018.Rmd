@@ -1,7 +1,7 @@
 ---
 title: "HW52018"
-author: "Vicki Hertzberg"
-date: "3/5/2018"
+author: "Martha Wetzel"
+date: "3/11/2018"
 output: html_document
 ---
 
@@ -25,7 +25,7 @@ packageVersion("RColorBrewer")
 #You will need to download the data from Canvas
 # You will need to change your path
 
-load("~/Downloads/HMPv35.RData")
+load("HMPv35.RData")
 
 HMPv35
 
@@ -50,7 +50,7 @@ sub <- get_variable(HMPv35, "HMPbodysubsite") %in% c("Stool", "Palatine_Tonsils"
 
 sample_data(HMPv35)$sub <- factor(sub)
 
-HMPv35sub <- prune_samples(sample_data(HMPv35)$sub == TRUE, HMPv35)
+HMPv35sub <- prune_samples(sample_data(HMPv35)$sub == TRUE, HMPv35) #prune_samples is a function for filtering phyloseq objects
 
 summary(sample_data(HMPv35sub))
 
@@ -65,6 +65,16 @@ Subset the HMPv35 object to obtain only the samples from Tongue_dorsum. Call thi
 ```{r}
 
 # Fill in your code to subset
+
+sub_t <- get_variable(HMPv35, "HMPbodysubsite") %in% "Tongue_dorsum" 
+
+sample_data(HMPv35)$sub_t <- factor(sub_t)
+
+HMPv35sub2 <- prune_samples(sample_data(HMPv35)$sub_t == TRUE, HMPv35) #prune_samples is a function for filtering phyloseq objects
+
+summary(sample_data(HMPv35sub2))
+
+HMPv35sub2
 
 # Call the new object HMPv35sub2
 
@@ -87,7 +97,7 @@ Let's add a box plot to these displays of diversity
 
 ```{r}
 
-p + geom_boxplot(data=p$data, aes(x=HMPbodysubsite, y=value, color=NULL), alpha=0.1)
+p + geom_boxplot(data=p$data, aes(x=HMPbodysubsite, y=value, color=NULL), alpha=0.1) #aes stands for aesthetic mappings
 
 ```
 
@@ -97,6 +107,9 @@ Produce the geometric box plot of diversity measures for your object, HMPv35sub2
 ```{r}
 
 #Place your code for the box plot for diversity here
+
+p <- plot_richness(HMPv35sub2, "HMPbodysubsite", measures=alpha_meas)
+p + geom_boxplot(data=p$data, aes(y=value, color=NULL), alpha=0.1) + ggtitle("Richness at Tongue Dorsum")
 
 ```
 
@@ -108,9 +121,9 @@ Let's see what phyla are represented here. This will rely on Base R graphics.
 #Calclate number of taxa in object
 ntaxa(HMPv35sub)
 
-par(mar = c(10, 4, 4, 2) + 0.1) # make more room on bottom margin
+par(mar = c(10, 4, 4, 2) + 0.1) # make more room on bottom margin - par is a function that sets or queries graphical values
 N <- 20
-barplot(sort(taxa_sums(HMPv35sub), TRUE)[1:N]/nsamples(HMPv35sub), las=2)
+barplot(sort(taxa_sums(HMPv35sub), TRUE)[1:N]/nsamples(HMPv35sub), las=2) #The sort part of this statement and the [1:20] is to select the 20 most common
 
 ```
 
@@ -124,6 +137,20 @@ You see what taxa are most prevalent in your subset, HMPv35sub2
 ```{r}
 
 #Place your code here
+ntaxa(HMPv35sub2)
+
+par(mar = c(10, 4, 4, 2) + 0.1) # make more room on bottom margin - par is a function that sets or queries graphical values
+N <- 20
+
+highval <- max(sort(taxa_sums(HMPv35sub2), TRUE)[1:N]/nsamples(HMPv35sub2))
+highval
+
+# This correctly sets y-axis range
+barplot(sort(taxa_sums(HMPv35sub2), TRUE)[1:N]/nsamples(HMPv35sub2), las=2, main = 
+          "Most Common Taxa for Tongue Dorsum", ylim=c(0,250))
+
+
+# Note- taxa_sums returns the total # individuals from each species/taxa/OTU
 
 ```
 
@@ -166,6 +193,22 @@ Using your HMPv35sub2 object, throw the rare taxa out of that object, then reduc
 ```{r}
 
 #Insert your code to throw out the rare taxa from the HMPv35sub2 object
+#The next step filters out taxa with low occurrence throughout all samples
+
+HMPv35sub2sub = filter_taxa(HMPv35sub2, function(x) sum(x > 3) > (0.2*length(x)), TRUE)
+
+# The next step filters out all taxa that occur in less than .01% of samples
+
+HMPv35subr2  <- transform_sample_counts(HMPv35sub2sub, function(x) x / sum(x) )
+HMPv35subfr2 <- filter_taxa(HMPv35subr2, function(x) mean(x) > 1e-5, TRUE)
+
+
+HMPv35subfr2
+
+#Finally subset to only bacteria in the phylum Bacteroidetes
+
+HMPv35sub2frbac = subset_taxa(HMPv35subfr2, Phylum=="Bacteroidetes")
+HMPv35sub2frbac
 
 #Call the object HMPv35sub2frbac
 
@@ -190,6 +233,11 @@ Using your HMPv35sub2frbac object, what is the distribution of the top 20 OTU's?
 ```{r}
 
 #Place your code here.
+ntaxa(HMPv35sub2frbac)
+
+par(mar = c(10, 4, 4, 2) + 0.1) # this has to be done each time you make a graph or it resets
+N <- 20
+barplot(sort(taxa_sums(HMPv35sub2frbac), TRUE)[1:N]/nsamples(HMPv35sub2frbac), las=2, main = "Top 20 OTUs for Tongue Dorsum", ylim=c(0,0.03))
 
 ```
 
@@ -210,6 +258,8 @@ Plot sample abundance by body site for your object HMPv35sub2frbac
 ```{r}
 
 #Place your code for the plat here
+title = "plot_bar; by site; Bacteroidetes only at Tongue Dorsum"
+plot_bar(HMPv35sub2frbac, "HMPbodysubsite", "Abundance", title=title)
 
 ```
 
@@ -229,6 +279,7 @@ You try it with your HMPv35sub2frbac object
 ```{r}
 
 #Place your code for your plot with family here
+plot_bar(HMPv35sub2frbac, "HMPbodysubsite", "Abundance", "Phylum", title=title)
 
 ```
 
@@ -252,6 +303,6 @@ Which method of display do you like best and why?
 
 ```{r}
 
-#Place your answer here as another comment.
+# For these data, I think that color-coding the body subsite makes more sense, since it allows us to easily see the clustering by site. When the sites are differentiated by by shape instead of color, it is much harder to see the site clusters. However, I can imagine a situation in which it may be helpful to color-code by some kind of demographic characteristic, such as work place or family.
 
 ```
